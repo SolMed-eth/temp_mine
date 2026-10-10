@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String?
+
+  posts        Post[]
+  comments     Comment[]
+
+  // Users li kaytab3o had user
+  followers    Follow[] @relation("UserFollowers")
+  // Users li had user kaytab3hom
+  following    Follow[] @relation("UserFollowing")
+}
+
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  authorId  Int // FK 
+  content   String
+  createdAt DateTime @default(now())
+  comments Comment[]
+  author    User @relation(fields: [authorId], references: [id])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  authorId  Int
+  postId    Int
+  createdAt DateTime @default(now())
+  author User @relation(fields: [authorId], references: [id])
+  post   Post @relation(fields: [postId], references: [id])
+}
+
+model Follow {
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+
+  //follower howa user li dar follow, donc kayn f User.following.
+  //following howa user li ttab3aw, donc kayn f User.followers.
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+ // katmna3 nafs user ydir follow l-nafs account aktar men mara.
+  @@id([followerId, followingId])
+  // kat3awn f queries li katjib followers dyal user m3a tartib dyal follow.
+  @@index([followingId, createdAt])
+}
+
